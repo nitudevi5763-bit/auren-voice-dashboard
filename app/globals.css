@@ -4,13 +4,17 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+html {
+  font-size: 17px;
+}
+
 body {
   background: #0B0D10;
   color: #E7E9EC;
 }
 
 .input {
-  @apply w-full rounded-md border border-border bg-panel2 px-3 py-2 text-sm text-white placeholder-muted outline-none transition focus:border-amber;
+  @apply w-full rounded-lg border border-border bg-panel2 px-4 py-3 text-base text-white placeholder-muted outline-none transition focus:border-amber focus:ring-1 focus:ring-amber;
 }
 
 .waveform-bar {
