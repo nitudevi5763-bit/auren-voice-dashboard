@@ -1,3 +1,4 @@
+'use client';
 import { Users } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
 
