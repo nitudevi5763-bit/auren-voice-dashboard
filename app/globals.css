@@ -4,24 +4,13 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-html {
-  font-size: 17px;
-}
+html { font-size: 16px; }
 
 body {
-  background: #0B0D10;
-  color: #E7E9EC;
+  background: #0A0A0C;
+  color: #F2F2F3;
 }
 
 .input {
-  @apply w-full rounded-lg border border-border bg-panel2 px-4 py-3 text-base text-white placeholder-muted outline-none transition focus:border-amber focus:ring-1 focus:ring-amber;
-}
-
-.waveform-bar {
-  transform-origin: bottom;
-  animation: wave 1.2s ease-in-out infinite;
-}
-@keyframes wave {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
+  @apply w-full rounded-lg border border-border bg-panel2 px-4 py-2.5 text-sm text-white placeholder-muted outline-none transition focus:border-accent focus:ring-1 focus:ring-accent;
 }
