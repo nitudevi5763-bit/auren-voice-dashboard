@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Play, Loader2 } from 'lucide-react';
 import { Plus, X, Bot } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
