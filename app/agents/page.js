@@ -240,14 +240,21 @@ export default function AgentsPage() {
                   {CALL_DIRECTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Voice (Deepgram Aura-2)">
-                <select value={form.voice} onChange={(e) => setForm({ ...form, voice: e.target.value })} className="input">
-                  {Object.entries(VOICES).map(([accent, list]) => (
-                    <optgroup key={accent} label={accent}>
-                      {list.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                    </optgroup>
-                  ))}
-                </select>
+                           <Field label="Voice (Deepgram Aura-2)">
+                <div className="flex gap-2">
+                  <select value={form.voice} onChange={(e) => setForm({ ...form, voice: e.target.value })} className="input flex-1">
+                    {Object.entries(VOICES).map(([accent, list]) => (
+                      <optgroup key={accent} label={accent}>
+                        {list.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => playVoicePreview(form.voice)}
+                    className="flex w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-panel2 text-white transition hover:border-accent">
+                    {previewingVoice === form.voice ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                  </button>
+                </div>
+                <p className="mt-1.5 text-xs text-muted">Preview button dabao voice sunne ke liye.</p>
               </Field>
               <Field label="LLM model (Groq)">
                 <select value={form.llm_model} onChange={(e) => setForm({ ...form, llm_model: e.target.value })} className="input">
