@@ -84,6 +84,35 @@ export default function AgentsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm());
+    const [previewingVoice, setPreviewingVoice] = useState(null);
+  const audioRef = typeof window !== 'undefined' ? window.__aurenPreviewAudio : null;
+
+  async function playVoicePreview(voiceId) {
+    if (window.__aurenPreviewAudio) {
+      window.__aurenPreviewAudio.pause();
+      window.__aurenPreviewAudio = null;
+    }
+    if (previewingVoice === voiceId) { setPreviewingVoice(null); return; }
+
+    setPreviewingVoice(voiceId);
+    try {
+      const res = await fetch('/api/voice-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voice: voiceId }),
+      });
+      if (!res.ok) throw new Error('Preview failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      window.__aurenPreviewAudio = audio;
+      audio.onended = () => setPreviewingVoice(null);
+      audio.play();
+    } catch (err) {
+      setPreviewingVoice(null);
+      alert('Voice preview load nahi hua. DEEPGRAM_API_KEY Vercel env vars mein check karo.');
+    }
+  }
 
   async function load() {
     setLoading(true);
