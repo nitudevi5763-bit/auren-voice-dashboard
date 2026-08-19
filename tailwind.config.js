@@ -1,16 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./app/**/*.{js,jsx}'],
+  content: ['./app/**/*.{js,jsx}', './components/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        ink: '#0B0D10',
-        panel: '#14171C',
-        panel2: '#1B1F26',
-        border: '#262B33',
-        amber: '#F5A524',
-        mint: '#3DDC97',
-        muted: '#7A8290',
+        bg: '#0A0A0C',
+        sidebar: '#0D0D10',
+        panel: '#131316',
+        panel2: '#18181C',
+        border: '#232327',
+        accent: '#4F7CFF',
+        muted: '#8B8B94',
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
