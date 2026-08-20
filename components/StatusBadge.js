@@ -9,7 +9,7 @@ export default function StatusBadge({ status }) {
   const style = STYLES[status] || STYLES.paused;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${style}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-current'}`} />
       {status}
     </span>
   );
