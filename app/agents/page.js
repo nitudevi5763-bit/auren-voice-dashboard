@@ -174,7 +174,7 @@ export default function AgentsPage() {
           <h1 className="text-xl font-semibold text-white">Agents</h1>
           <p className="mt-1 text-sm text-muted">Build, test and deploy AI voice agents.</p>
         </div>
-        <button onClick={() => setPanelOpen(true)} className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110">
+         <button onClick={() => setPanelOpen(true)} className="gradient-btn flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white">
           <Plus size={16} /> Create Agent
         </button>
       </div>
@@ -271,7 +271,7 @@ export default function AgentsPage() {
                 </select>
               </Field>
               {error && <p className="text-sm text-red-400">{error}</p>}
-              <button disabled={saving} type="submit" className="w-full rounded-lg bg-accent py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50">
+               <button disabled={saving} type="submit" className="gradient-btn w-full rounded-lg py-3 text-sm font-semibold text-white disabled:opacity-50">
                 {saving ? 'Saving…' : 'Create Agent'}
               </button>
             </form>
