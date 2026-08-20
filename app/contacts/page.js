@@ -24,11 +24,13 @@ const STATUS_COLORS = {
 };
 
 function emptyForm() {
-  return { name: '', phone: '', email: '', source: 'manual', status: 'new', notes: '' };
+  return { name: '', phone: '', email: '', source: 'manual', status: 'new', agent_id: '', notes: '' };
 }
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [filterAgent, setFilterAgent] = useState('all');
   const [loading, setLoading] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,9 +39,14 @@ export default function ContactsPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch('/api/contacts');
-    const data = await res.json();
-    setContacts(data.contacts || []);
+    const [contactRes, agentRes] = await Promise.all([
+      fetch('/api/contacts'),
+      fetch('/api/clients'),
+    ]);
+    const contactData = await contactRes.json();
+    const agentData = await agentRes.json();
+    setContacts(contactData.contacts || []);
+    setAgents(agentData.clients || []);
     setLoading(false);
   }
 
@@ -49,7 +56,8 @@ export default function ContactsPage() {
     e.preventDefault();
     setError(''); setSaving(true);
     const res = await fetch('/api/contacts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, agent_id: form.agent_id || null }),
     });
     const data = await res.json();
     setSaving(false);
@@ -70,6 +78,8 @@ export default function ContactsPage() {
     load();
   }
 
+  const filteredContacts = filterAgent === 'all' ? contacts : contacts.filter((c) => c.agent_id === filterAgent);
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -82,11 +92,21 @@ export default function ContactsPage() {
         </button>
       </div>
 
-      <div className="mt-8">
+      {contacts.length > 0 && (
+        <div className="mt-6 flex items-center gap-2">
+          <span className="text-xs font-medium text-muted">Filter by agent:</span>
+          <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} className="input w-auto py-1.5 text-xs">
+            <option value="all">All agents</option>
+            {agents.map((a) => <option key={a.id} value={a.id}>{a.business_name}</option>)}
+          </select>
+        </div>
+      )}
+
+      <div className="mt-6">
         {loading ? (
           <p className="py-16 text-center text-sm text-muted">Loading…</p>
-        ) : contacts.length === 0 ? (
-          <EmptyState icon={Users} title="No contacts yet"
+        ) : filteredContacts.length === 0 ? (
+          <EmptyState icon={Users} title={contacts.length === 0 ? 'No contacts yet' : 'No contacts for this agent'}
             description="Add a contact manually, or they'll appear here once campaigns or inbound calls start bringing in leads." ctaLabel="Add Contact" onAction={() => setPanelOpen(true)} />
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border">
@@ -95,6 +115,7 @@ export default function ContactsPage() {
                 <tr>
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 font-medium">Phone</th>
+                  <th className="px-5 py-3 font-medium">Agent</th>
                   <th className="px-5 py-3 font-medium">Source</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Calls</th>
@@ -102,10 +123,11 @@ export default function ContactsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {contacts.map((c) => (
+                {filteredContacts.map((c) => (
                   <tr key={c.id} className="hover:bg-panel/50">
                     <td className="px-5 py-4 font-medium text-white">{c.name || '—'}</td>
                     <td className="px-5 py-4 font-mono text-xs text-muted">{c.phone}</td>
+                    <td className="px-5 py-4 text-muted">{c.clients?.business_name || '—'}</td>
                     <td className="px-5 py-4 capitalize text-muted">{c.source}</td>
                     <td className="px-5 py-4">
                       <select value={c.status} onChange={(e) => updateStatus(c.id, e.target.value)}
@@ -135,6 +157,12 @@ export default function ContactsPage() {
               <button onClick={() => setPanelOpen(false)} className="text-muted hover:text-white"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <Field label="Belongs to agent">
+                <select value={form.agent_id} onChange={(e) => setForm({ ...form, agent_id: e.target.value })} className="input">
+                  <option value="">— Select agent —</option>
+                  {agents.map((a) => <option key={a.id} value={a.id}>{a.business_name}</option>)}
+                </select>
+              </Field>
               <Field label="Name">
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Rohan Sharma" className="input" />
               </Field>
