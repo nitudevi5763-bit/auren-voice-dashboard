@@ -31,7 +31,7 @@ export default function Sidebar() {
   return (
     <aside className={`hidden md:flex h-screen flex-col border-r border-border bg-sidebar transition-all ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
       <div className="flex items-center justify-between px-4 py-5">
-        {!collapsed && <span className="font-mono text-sm font-semibold tracking-wide text-white">AUREN</span>}
+        {!collapsed && <span className="gradient-text font-mono text-sm font-bold tracking-wide">AUREN</span>}
         <button onClick={() => setCollapsed(!collapsed)} className="text-muted hover:text-white">
           {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
         </button>
@@ -63,8 +63,9 @@ function NavItem({ item, active, collapsed }) {
   const Icon = item.icon;
   return (
     <Link href={item.href}
-      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${active ? 'bg-panel text-white' : 'text-muted hover:bg-panel hover:text-white'}`}>
-      <Icon size={16} />
+      className={`relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${active ? 'bg-panel text-white' : 'text-muted hover:bg-panel hover:text-white'}`}>
+      {active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full gradient-btn" />}
+      <Icon size={16} className={active ? 'text-accent' : ''} />
       {!collapsed && <span>{item.label}</span>}
     </Link>
   );
