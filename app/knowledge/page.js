@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, X, BookOpen } from 'lucide-react';
+import { Plus, X, BookOpen, FileText } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
 
 const TYPES = [
   ['text', 'Text / Notes'],
   ['faq', 'FAQ'],
   ['url', 'Website URL'],
+  ['pdf', 'PDF Document'],
 ];
 
 const CONTENT_PLACEHOLDERS = {
@@ -27,6 +28,7 @@ export default function KnowledgePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm());
+  const [pdfFile, setPdfFile] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -53,6 +55,21 @@ export default function KnowledgePage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(''); setSaving(true);
+
+    if (form.type === 'pdf') {
+      if (!pdfFile) { setError('PDF file select karo'); setSaving(false); return; }
+      const fd = new FormData();
+      fd.append('file', pdfFile);
+      fd.append('name', form.name);
+      fd.append('agent_ids', JSON.stringify(form.agent_ids));
+      const res = await fetch('/api/knowledge/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      setSaving(false);
+      if (!res.ok) { setError(data.error || 'Upload fail ho gaya'); return; }
+      setForm(emptyForm()); setPdfFile(null); setPanelOpen(false); load();
+      return;
+    }
+
     const res = await fetch('/api/knowledge', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     });
@@ -91,7 +108,7 @@ export default function KnowledgePage() {
           <p className="py-16 text-center text-sm text-muted">Loading…</p>
         ) : sources.length === 0 ? (
           <EmptyState icon={BookOpen} title="No knowledge sources yet"
-            description="Add text notes, FAQs, or a website URL and link them to agents." ctaLabel="Add Source" onAction={() => setPanelOpen(true)} />
+            description="Add text notes, FAQs, a website URL, or upload a PDF and link them to agents." ctaLabel="Add Source" onAction={() => setPanelOpen(true)} />
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-left text-sm">
@@ -107,8 +124,17 @@ export default function KnowledgePage() {
               <tbody className="divide-y divide-border">
                 {sources.map((s) => (
                   <tr key={s.id} className="hover:bg-panel/50">
-                    <td className="px-5 py-4 font-medium text-white">{s.name}</td>
-                    <td className="px-5 py-4 capitalize text-muted">{s.type}</td>
+                    <td className="px-5 py-4 font-medium text-white">
+                      <div className="flex items-center gap-2">
+                        {s.name}
+                        {s.file_url && (
+                          <a href={s.file_url} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent">
+                            <FileText size={14} />
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 uppercase text-muted">{s.type}</td>
                     <td className="px-5 py-4 text-muted">{agentNames(s)}</td>
                     <td className="px-5 py-4">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">
@@ -137,17 +163,25 @@ export default function KnowledgePage() {
             </div>
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               <Field label="Name">
-                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. SmileCare FAQs" className="input" />
+                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. SmileCare Brochure" className="input" />
               </Field>
               <Field label="Type">
-                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="input">
+                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, content: '' })} className="input">
                   {TYPES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Content">
-                <textarea required rows={6} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  placeholder={CONTENT_PLACEHOLDERS[form.type]} className="input resize-none" />
-              </Field>
+
+              {form.type === 'pdf' ? (
+                <Field label="PDF file (max ~4.5MB)">
+                  <input required type="file" accept="application/pdf" onChange={(e) => setPdfFile(e.target.files[0])} className="input" />
+                </Field>
+              ) : (
+                <Field label="Content">
+                  <textarea required rows={6} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
+                    placeholder={CONTENT_PLACEHOLDERS[form.type]} className="input resize-none" />
+                </Field>
+              )}
+
               <Field label="Link to agents">
                 <div className="space-y-2 rounded-lg border border-border bg-panel2 p-3">
                   {agents.length === 0 && <p className="text-xs text-muted">Koi agent nahi mila — pehle Agents page se agent banao.</p>}
