@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Play, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Play, Loader2, Mic, PhoneOff, PhoneCall } from 'lucide-react';
 import { Plus, X, Bot } from 'lucide-react';
+import { Room, RoomEvent } from 'livekit-client';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -78,6 +79,100 @@ function emptyForm() {
   };
 }
 
+function TestCallModal({ agent, onClose }) {
+  const [status, setStatus] = useState('connecting');
+  const [error, setError] = useState('');
+  const roomRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let room;
+
+    async function connect() {
+      try {
+        const res = await fetch('/api/test-token', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId: agent.id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Token fetch fail hua');
+
+        room = new Room();
+        roomRef.current = room;
+
+        room.on(RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === 'audio') {
+            const el = track.attach();
+            el.autoplay = true;
+            el.id = `auren-test-audio-${agent.id}`;
+            document.body.appendChild(el);
+          }
+        });
+
+        room.on(RoomEvent.Disconnected, () => {
+          if (!cancelled) setStatus('ended');
+        });
+
+        await room.connect(data.url, data.token);
+        await room.localParticipant.setMicrophoneEnabled(true);
+
+        if (!cancelled) setStatus('connected');
+      } catch (err) {
+        if (!cancelled) { setError(err.message); setStatus('error'); }
+      }
+    }
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      if (room) room.disconnect();
+      const el = document.getElementById(`auren-test-audio-${agent.id}`);
+      if (el) el.remove();
+    };
+  }, [agent.id]);
+
+  function endCall() {
+    if (roomRef.current) roomRef.current.disconnect();
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-panel p-6 text-center">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-white">Testing: {agent.business_name}</h3>
+          <button onClick={endCall} className="text-muted hover:text-white"><X size={18} /></button>
+        </div>
+
+        <div className="mt-8 flex flex-col items-center gap-3">
+          {status === 'connecting' && (
+            <>
+              <Loader2 size={32} className="animate-spin text-accent" />
+              <p className="text-sm text-muted">Connecting…</p>
+            </>
+          )}
+          {status === 'connected' && (
+            <>
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+                <Mic size={28} className="text-emerald-400" />
+              </div>
+              <p className="text-sm text-white">Mic live hai — bolo, agent sunega</p>
+              <p className="text-xs text-muted">Browser mic permission allow karna zaroori hai</p>
+            </>
+          )}
+          {status === 'ended' && <p className="text-sm text-muted">Call end ho gayi</p>}
+          {status === 'error' && <p className="text-sm text-red-400">{error}</p>}
+        </div>
+
+        <button onClick={endCall} className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20">
+          <PhoneOff size={16} /> End Test Call
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,8 +180,8 @@ export default function AgentsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState(emptyForm());
-    const [previewingVoice, setPreviewingVoice] = useState(null);
-  const audioRef = typeof window !== 'undefined' ? window.__aurenPreviewAudio : null;
+  const [previewingVoice, setPreviewingVoice] = useState(null);
+  const [testingAgent, setTestingAgent] = useState(null);
 
   async function playVoicePreview(voiceId) {
     if (window.__aurenPreviewAudio) {
@@ -209,6 +304,9 @@ export default function AgentsPage() {
                     <td className="px-5 py-4 text-muted">{a.phone_number || '—'}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
+                        <button onClick={() => setTestingAgent(a)} className="flex items-center gap-1.5 rounded-md border border-accent/40 px-3 py-1.5 text-xs text-accent hover:bg-accent/10">
+                          <PhoneCall size={12} /> Test Call
+                        </button>
                         <button onClick={() => duplicateAgent(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-white">Duplicate</button>
                         <button onClick={() => toggleActive(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-white">{a.is_active ? 'Pause' : 'Activate'}</button>
                         <button onClick={() => deleteAgent(a.id)} className="rounded-md border border-border px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10">Delete</button>
@@ -278,6 +376,8 @@ export default function AgentsPage() {
           </div>
         </div>
       )}
+
+      {testingAgent && <TestCallModal agent={testingAgent} onClose={() => setTestingAgent(null)} />}
     </div>
   );
 }
