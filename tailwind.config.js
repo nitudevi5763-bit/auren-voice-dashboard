@@ -4,16 +4,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#0A0A0C',
-        sidebar: '#0D0D10',
-        panel: '#131316',
-        panel2: '#18181C',
-        border: '#232327',
+        bg: '#08080B',
+        sidebar: '#0B0B0F',
+        panel: '#131318',
+        panel2: '#1A1A21',
+        border: '#232329',
         accent: '#FF4D8D',
         accent2: '#7C3AED',
-        muted: '#8B8B94',
+        muted: '#93939F',
       },
       fontFamily: {
+        display: ['"Space Grotesk"', '"Inter"', 'ui-sans-serif', 'system-ui'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
       },
