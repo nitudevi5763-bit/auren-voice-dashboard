@@ -1,74 +1,89 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, Mic, PhoneOff, PhoneCall } from 'lucide-react';
-import { Plus, X, Bot } from 'lucide-react';
+import { Play, Loader2, Mic, PhoneOff, PhoneCall, Plus, X, Bot } from 'lucide-react';
 import { Room, RoomEvent } from 'livekit-client';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
+import Select from '../../components/Select';
 
-const VOICES = {
-  American: [
-    ['aura-2-andromeda-en', 'Andromeda — Casual, Expressive'],
-    ['aura-2-apollo-en', 'Apollo — Confident, Casual'],
-    ['aura-2-arcas-en', 'Arcas — Natural, Smooth, Clear'],
-    ['aura-2-aries-en', 'Aries — Warm, Energetic'],
-    ['aura-2-asteria-en', 'Asteria — Clear, Confident, Energetic'],
-    ['aura-2-athena-en', 'Athena — Calm, Smooth, Professional'],
-    ['aura-2-atlas-en', 'Atlas — Enthusiastic, Friendly'],
-    ['aura-2-aurora-en', 'Aurora — Cheerful, Energetic'],
-    ['aura-2-callista-en', 'Callista — Clear, Professional'],
-    ['aura-2-cora-en', 'Cora — Smooth, Melodic, Caring'],
-    ['aura-2-cordelia-en', 'Cordelia — Approachable, Warm, Polite'],
-    ['aura-2-delia-en', 'Delia — Casual, Friendly, Cheerful'],
-    ['aura-2-electra-en', 'Electra — Professional, Engaging'],
-    ['aura-2-harmonia-en', 'Harmonia — Empathetic, Calm, Confident'],
-    ['aura-2-helena-en', 'Helena — Caring, Natural, Friendly'],
-    ['aura-2-hera-en', 'Hera — Smooth, Warm, Professional'],
-    ['aura-2-hermes-en', 'Hermes — Expressive, Professional'],
-    ['aura-2-iris-en', 'Iris — Cheerful, Approachable'],
-    ['aura-2-janus-en', 'Janus — Southern, Smooth, Trustworthy'],
-    ['aura-2-juno-en', 'Juno — Natural, Engaging, Melodic'],
-    ['aura-2-jupiter-en', 'Jupiter — Expressive, Baritone'],
-    ['aura-2-luna-en', 'Luna — Friendly, Natural, Engaging'],
-    ['aura-2-mars-en', 'Mars — Smooth, Patient, Trustworthy'],
-    ['aura-2-minerva-en', 'Minerva — Positive, Friendly, Natural'],
-    ['aura-2-neptune-en', 'Neptune — Professional, Patient, Polite'],
-    ['aura-2-odysseus-en', 'Odysseus — Calm, Professional'],
-    ['aura-2-ophelia-en', 'Ophelia — Expressive, Enthusiastic'],
-    ['aura-2-orion-en', 'Orion — Approachable, Calm, Polite'],
-    ['aura-2-orpheus-en', 'Orpheus — Professional, Confident, Trustworthy'],
-    ['aura-2-phoebe-en', 'Phoebe — Energetic, Warm, Casual'],
-    ['aura-2-pluto-en', 'Pluto — Smooth, Calm, Empathetic'],
-    ['aura-2-saturn-en', 'Saturn — Knowledgeable, Confident'],
-    ['aura-2-selene-en', 'Selene — Expressive, Engaging, Energetic'],
-    ['aura-2-thalia-en', 'Thalia — Clear, Confident, Energetic (default)'],
-    ['aura-2-vesta-en', 'Vesta — Natural, Patient, Empathetic'],
-    ['aura-2-zeus-en', 'Zeus — Deep, Trustworthy, Smooth'],
-  ],
-  British: [
-    ['aura-2-draco-en', 'Draco — Warm, Trustworthy, Baritone'],
-    ['aura-2-pandora-en', 'Pandora — Smooth, Calm, Melodic'],
-  ],
-  Australian: [
-    ['aura-2-hyperion-en', 'Hyperion — Caring, Warm, Empathetic'],
-    ['aura-2-theia-en', 'Theia — Expressive, Polite, Sincere'],
-  ],
-  Filipino: [
-    ['aura-2-amalthea-en', 'Amalthea — Engaging, Natural, Cheerful'],
-  ],
-};
-
-const LLM_MODELS = [
-  ['openai/gpt-oss-120b', 'GPT-OSS 120B — best quality (recommended)'],
-  ['openai/gpt-oss-20b', 'GPT-OSS 20B — faster, cheaper'],
-  ['qwen/qwen3.6-27b', 'Qwen 3.6 27B — preview'],
+const VOICE_GROUPS = [
+  {
+    label: 'American',
+    options: [
+      ['aura-2-andromeda-en', 'Andromeda — Casual, Expressive'],
+      ['aura-2-apollo-en', 'Apollo — Confident, Casual'],
+      ['aura-2-arcas-en', 'Arcas — Natural, Smooth, Clear'],
+      ['aura-2-aries-en', 'Aries — Warm, Energetic'],
+      ['aura-2-asteria-en', 'Asteria — Clear, Confident, Energetic'],
+      ['aura-2-athena-en', 'Athena — Calm, Smooth, Professional'],
+      ['aura-2-atlas-en', 'Atlas — Enthusiastic, Friendly'],
+      ['aura-2-aurora-en', 'Aurora — Cheerful, Energetic'],
+      ['aura-2-callista-en', 'Callista — Clear, Professional'],
+      ['aura-2-cora-en', 'Cora — Smooth, Melodic, Caring'],
+      ['aura-2-cordelia-en', 'Cordelia — Approachable, Warm, Polite'],
+      ['aura-2-delia-en', 'Delia — Casual, Friendly, Cheerful'],
+      ['aura-2-electra-en', 'Electra — Professional, Engaging'],
+      ['aura-2-harmonia-en', 'Harmonia — Empathetic, Calm, Confident'],
+      ['aura-2-helena-en', 'Helena — Caring, Natural, Friendly'],
+      ['aura-2-hera-en', 'Hera — Smooth, Warm, Professional'],
+      ['aura-2-hermes-en', 'Hermes — Expressive, Professional'],
+      ['aura-2-iris-en', 'Iris — Cheerful, Approachable'],
+      ['aura-2-janus-en', 'Janus — Southern, Smooth, Trustworthy'],
+      ['aura-2-juno-en', 'Juno — Natural, Engaging, Melodic'],
+      ['aura-2-jupiter-en', 'Jupiter — Expressive, Baritone'],
+      ['aura-2-luna-en', 'Luna — Friendly, Natural, Engaging'],
+      ['aura-2-mars-en', 'Mars — Smooth, Patient, Trustworthy'],
+      ['aura-2-minerva-en', 'Minerva — Positive, Friendly, Natural'],
+      ['aura-2-neptune-en', 'Neptune — Professional, Patient, Polite'],
+      ['aura-2-odysseus-en', 'Odysseus — Calm, Professional'],
+      ['aura-2-ophelia-en', 'Ophelia — Expressive, Enthusiastic'],
+      ['aura-2-orion-en', 'Orion — Approachable, Calm, Polite'],
+      ['aura-2-orpheus-en', 'Orpheus — Professional, Confident, Trustworthy'],
+      ['aura-2-phoebe-en', 'Phoebe — Energetic, Warm, Casual'],
+      ['aura-2-pluto-en', 'Pluto — Smooth, Calm, Empathetic'],
+      ['aura-2-saturn-en', 'Saturn — Knowledgeable, Confident'],
+      ['aura-2-selene-en', 'Selene — Expressive, Engaging, Energetic'],
+      ['aura-2-thalia-en', 'Thalia — Clear, Confident, Energetic (default)'],
+      ['aura-2-vesta-en', 'Vesta — Natural, Patient, Empathetic'],
+      ['aura-2-zeus-en', 'Zeus — Deep, Trustworthy, Smooth'],
+    ].map(([value, label]) => ({ value, label })),
+  },
+  {
+    label: 'British',
+    options: [
+      ['aura-2-draco-en', 'Draco — Warm, Trustworthy, Baritone'],
+      ['aura-2-pandora-en', 'Pandora — Smooth, Calm, Melodic'],
+    ].map(([value, label]) => ({ value, label })),
+  },
+  {
+    label: 'Australian',
+    options: [
+      ['aura-2-hyperion-en', 'Hyperion — Caring, Warm, Empathetic'],
+      ['aura-2-theia-en', 'Theia — Expressive, Polite, Sincere'],
+    ].map(([value, label]) => ({ value, label })),
+  },
+  {
+    label: 'Filipino',
+    options: [['aura-2-amalthea-en', 'Amalthea — Engaging, Natural, Cheerful']].map(([value, label]) => ({ value, label })),
+  },
 ];
 
-const TELEPHONY_PROVIDERS = ['exotel', 'vobiz', 'other'];
-const CALL_DIRECTIONS = [
-  ['inbound', 'Inbound'],
-  ['outbound', 'Outbound'],
-  ['both', 'Inbound + Outbound'],
+const LLM_OPTIONS = [
+  { value: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B — best quality (recommended)' },
+  { value: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B — faster, cheaper' },
+  { value: 'qwen/qwen3.6-27b', label: 'Qwen 3.6 27B — preview' },
+];
+
+const DIRECTION_OPTIONS = [
+  { value: 'inbound', label: 'Inbound' },
+  { value: 'outbound', label: 'Outbound' },
+  { value: 'both', label: 'Inbound + Outbound' },
+];
+
+const PROVIDER_OPTIONS = [
+  { value: 'exotel', label: 'Exotel' },
+  { value: 'vobiz', label: 'Vobiz' },
+  { value: 'other', label: 'Other' },
 ];
 
 function emptyForm() {
@@ -109,13 +124,10 @@ function TestCallModal({ agent, onClose }) {
           }
         });
 
-        room.on(RoomEvent.Disconnected, () => {
-          if (!cancelled) setStatus('ended');
-        });
+        room.on(RoomEvent.Disconnected, () => { if (!cancelled) setStatus('ended'); });
 
         await room.connect(data.url, data.token);
         await room.localParticipant.setMicrophoneEnabled(true);
-
         if (!cancelled) setStatus('connected');
       } catch (err) {
         if (!cancelled) { setError(err.message); setStatus('error'); }
@@ -138,11 +150,11 @@ function TestCallModal({ agent, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-panel p-6 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-panel p-6 text-center shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-white">Testing: {agent.business_name}</h3>
-          <button onClick={endCall} className="text-muted hover:text-white"><X size={18} /></button>
+          <h3 className="font-display text-base font-semibold text-white">Testing: {agent.business_name}</h3>
+          <button onClick={endCall} className="rounded-md p-1 text-muted hover:bg-panel2 hover:text-white"><X size={18} /></button>
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-3">
@@ -154,7 +166,7 @@ function TestCallModal({ agent, onClose }) {
           )}
           {status === 'connected' && (
             <>
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 ring-4 ring-emerald-500/10">
                 <Mic size={28} className="text-emerald-400" />
               </div>
               <p className="text-sm text-white">Mic live hai — bolo, agent sunega</p>
@@ -165,7 +177,7 @@ function TestCallModal({ agent, onClose }) {
           {status === 'error' && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
-        <button onClick={endCall} className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20">
+        <button onClick={endCall} className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 py-3 text-sm font-medium text-red-400 transition hover:bg-red-500/20">
           <PhoneOff size={16} /> End Test Call
         </button>
       </div>
@@ -184,18 +196,13 @@ export default function AgentsPage() {
   const [testingAgent, setTestingAgent] = useState(null);
 
   async function playVoicePreview(voiceId) {
-    if (window.__aurenPreviewAudio) {
-      window.__aurenPreviewAudio.pause();
-      window.__aurenPreviewAudio = null;
-    }
+    if (window.__aurenPreviewAudio) { window.__aurenPreviewAudio.pause(); window.__aurenPreviewAudio = null; }
     if (previewingVoice === voiceId) { setPreviewingVoice(null); return; }
 
     setPreviewingVoice(voiceId);
     try {
       const res = await fetch('/api/voice-preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voice: voiceId }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voice: voiceId }),
       });
       if (!res.ok) throw new Error('Preview failed');
       const blob = await res.blob();
@@ -234,8 +241,7 @@ export default function AgentsPage() {
 
   async function toggleActive(agent) {
     await fetch(`/api/clients/${agent.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !agent.is_active }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !agent.is_active }),
     });
     load();
   }
@@ -266,10 +272,10 @@ export default function AgentsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">Agents</h1>
+          <h1 className="text-white">Agents</h1>
           <p className="mt-1 text-sm text-muted">Build, test and deploy AI voice agents.</p>
         </div>
-         <button onClick={() => setPanelOpen(true)} className="gradient-btn flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white">
+        <button onClick={() => setPanelOpen(true)} className="gradient-btn flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white">
           <Plus size={16} /> Create Agent
         </button>
       </div>
@@ -280,7 +286,7 @@ export default function AgentsPage() {
         ) : agents.length === 0 ? (
           <EmptyState icon={Bot} title="No agents yet" description="Build your first AI voice agent to start handling calls." ctaLabel="Create Agent" onAction={() => setPanelOpen(true)} />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border">
+          <div className="card-hover overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border bg-panel text-xs uppercase tracking-wide text-muted">
                 <tr>
@@ -295,7 +301,7 @@ export default function AgentsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {agents.map((a) => (
-                  <tr key={a.id} className="hover:bg-panel/50">
+                  <tr key={a.id} className="transition hover:bg-panel/50">
                     <td className="px-5 py-4 font-medium text-white">{a.business_name}</td>
                     <td className="px-5 py-4"><StatusBadge status={a.is_active ? 'active' : 'paused'} /></td>
                     <td className="px-5 py-4 capitalize text-muted">{(a.call_direction || 'inbound').replace('both', 'inbound + outbound')}</td>
@@ -304,12 +310,12 @@ export default function AgentsPage() {
                     <td className="px-5 py-4 text-muted">{a.phone_number || '—'}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setTestingAgent(a)} className="flex items-center gap-1.5 rounded-md border border-accent/40 px-3 py-1.5 text-xs text-accent hover:bg-accent/10">
+                        <button onClick={() => setTestingAgent(a)} className="flex items-center gap-1.5 rounded-md border border-accent/40 px-3 py-1.5 text-xs text-accent transition hover:bg-accent/10">
                           <PhoneCall size={12} /> Test Call
                         </button>
-                        <button onClick={() => duplicateAgent(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-white">Duplicate</button>
-                        <button onClick={() => toggleActive(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-white">{a.is_active ? 'Pause' : 'Activate'}</button>
-                        <button onClick={() => deleteAgent(a.id)} className="rounded-md border border-border px-3 py-1.5 text-xs text-red-400 hover:bg-red-400/10">Delete</button>
+                        <button onClick={() => duplicateAgent(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted transition hover:text-white">Duplicate</button>
+                        <button onClick={() => toggleActive(a)} className="rounded-md border border-border px-3 py-1.5 text-xs text-muted transition hover:text-white">{a.is_active ? 'Pause' : 'Activate'}</button>
+                        <button onClick={() => deleteAgent(a.id)} className="rounded-md border border-border px-3 py-1.5 text-xs text-red-400 transition hover:bg-red-400/10">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -321,11 +327,11 @@ export default function AgentsPage() {
       </div>
 
       {panelOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60">
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-panel p-6">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-panel p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-white">Create Agent</h2>
-              <button onClick={() => setPanelOpen(false)} className="text-muted hover:text-white"><X size={18} /></button>
+              <button onClick={() => setPanelOpen(false)} className="rounded-md p-1 text-muted hover:bg-panel2 hover:text-white"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               <Field label="Business name">
@@ -335,19 +341,13 @@ export default function AgentsPage() {
                 <textarea required rows={5} value={form.system_prompt} onChange={(e) => setForm({ ...form, system_prompt: e.target.value })} placeholder="Tum SmileCare Dental ki AI receptionist ho..." className="input resize-none" />
               </Field>
               <Field label="Call direction">
-                <select value={form.call_direction} onChange={(e) => setForm({ ...form, call_direction: e.target.value })} className="input">
-                  {CALL_DIRECTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                </select>
+                <Select value={form.call_direction} onChange={(v) => setForm({ ...form, call_direction: v })} options={DIRECTION_OPTIONS} />
               </Field>
-                           <Field label="Voice (Deepgram Aura-2)">
+              <Field label="Voice (Deepgram Aura-2)">
                 <div className="flex gap-2">
-                  <select value={form.voice} onChange={(e) => setForm({ ...form, voice: e.target.value })} className="input flex-1">
-                    {Object.entries(VOICES).map(([accent, list]) => (
-                      <optgroup key={accent} label={accent}>
-                        {list.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                      </optgroup>
-                    ))}
-                  </select>
+                  <div className="flex-1">
+                    <Select value={form.voice} onChange={(v) => setForm({ ...form, voice: v })} groups={VOICE_GROUPS} />
+                  </div>
                   <button type="button" onClick={() => playVoicePreview(form.voice)}
                     className="flex w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-panel2 text-white transition hover:border-accent">
                     {previewingVoice === form.voice ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
@@ -356,20 +356,16 @@ export default function AgentsPage() {
                 <p className="mt-1.5 text-xs text-muted">Preview button dabao voice sunne ke liye.</p>
               </Field>
               <Field label="LLM model (Groq)">
-                <select value={form.llm_model} onChange={(e) => setForm({ ...form, llm_model: e.target.value })} className="input">
-                  {LLM_MODELS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                </select>
+                <Select value={form.llm_model} onChange={(v) => setForm({ ...form, llm_model: v })} options={LLM_OPTIONS} />
               </Field>
               <Field label="Phone number (optional)">
                 <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} placeholder="+91XXXXXXXXXX" className="input" />
               </Field>
               <Field label="Telephony provider">
-                <select value={form.telephony_provider} onChange={(e) => setForm({ ...form, telephony_provider: e.target.value })} className="input">
-                  {TELEPHONY_PROVIDERS.map((p) => <option key={p} value={p}>{p[0].toUpperCase() + p.slice(1)}</option>)}
-                </select>
+                <Select value={form.telephony_provider} onChange={(v) => setForm({ ...form, telephony_provider: v })} options={PROVIDER_OPTIONS} />
               </Field>
               {error && <p className="text-sm text-red-400">{error}</p>}
-               <button disabled={saving} type="submit" className="gradient-btn w-full rounded-lg py-3 text-sm font-semibold text-white disabled:opacity-50">
+              <button disabled={saving} type="submit" className="gradient-btn w-full rounded-lg py-3 text-sm font-semibold text-white disabled:opacity-50">
                 {saving ? 'Saving…' : 'Create Agent'}
               </button>
             </form>
