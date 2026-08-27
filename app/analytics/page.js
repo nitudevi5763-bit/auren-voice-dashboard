@@ -36,13 +36,13 @@ export default function AnalyticsPage() {
   }, [calls, selectedAgent]);
 
   const totalCalls = filteredCalls.length;
-  const totalSeconds = filteredCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
+  const totalSeconds = filteredCalls.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
   const avgSeconds = totalCalls ? totalSeconds / totalCalls : 0;
 
   const perAgentStats = useMemo(() => {
     return agents.map((a) => {
       const agentCalls = calls.filter((c) => c.client_id === a.id);
-      const seconds = agentCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
+      const seconds = agentCalls.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
       return {
         id: a.id,
         name: a.business_name,
