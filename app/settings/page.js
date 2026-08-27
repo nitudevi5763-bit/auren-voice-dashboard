@@ -5,61 +5,58 @@ import Select from '../../components/Select';
 
 export default function SettingsPage() {
   const [agents, setAgents] = useState([]);
-  const [calls, setCalls] = useState([]);
-  const [rate, setRate] = useState(5);
+  const [billing, setBilling] = useState(null);
+  const [rate, setRate] = useState(0);
   const [savingRate, setSavingRate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState('all');
 
   useEffect(() => {
     async function load() {
-      const [agentsRes, callsRes, billingRes] = await Promise.all([
+      const [agentsRes, billingRes] = await Promise.all([
         fetch('/api/clients'),
-        fetch('/api/calls'),
         fetch('/api/billing'),
       ]);
       const agentsData = await agentsRes.json();
-      const callsData = await callsRes.json();
       const billingData = await billingRes.json();
       setAgents(agentsData.clients || []);
-      setCalls(callsData.calls || []);
-      setRate(billingData.cost_per_minute ?? 5);
+      setBilling(billingData);
+      setRate(billingData?.settings?.cost_per_minute ?? 0);
       setLoading(false);
     }
     load();
   }, []);
 
   async function saveRate() {
+    if (!billing?.settings?.id) return;
     setSavingRate(true);
-    await fetch('/api/billing', {
+    const res = await fetch('/api/billing', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cost_per_minute: Number(rate) }),
+      body: JSON.stringify({ id: billing.settings.id, cost_per_minute: Number(rate) }),
     });
+    const data = await res.json();
     setSavingRate(false);
+    if (data.settings) setBilling((b) => ({ ...b, settings: data.settings }));
   }
-
-  const filteredCalls = useMemo(() => {
-    if (selectedAgent === 'all') return calls;
-    return calls.filter((c) => c.client_id === selectedAgent);
-  }, [calls, selectedAgent]);
-
-  const totalSeconds = filteredCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
-  const totalMinutes = totalSeconds / 60;
-  const estimatedCost = totalMinutes * rate;
-
-  const perAgentBreakdown = useMemo(() => {
-    return agents.map((a) => {
-      const agentCalls = calls.filter((c) => c.client_id === a.id);
-      const seconds = agentCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
-      const minutes = seconds / 60;
-      return { id: a.id, name: a.business_name, totalCalls: agentCalls.length, minutes, cost: minutes * rate };
-    });
-  }, [agents, calls, rate]);
 
   const agentOptions = [
     { value: 'all', label: 'All agents' },
     ...agents.map((a) => ({ value: a.id, label: a.business_name })),
   ];
+
+  const selectedAgentName = useMemo(() => {
+    if (selectedAgent === 'all') return null;
+    return agents.find((a) => a.id === selectedAgent)?.business_name;
+  }, [agents, selectedAgent]);
+
+  const selectedStats = useMemo(() => {
+    if (!billing) return { calls: 0, minutes: 0, cost: 0 };
+    if (selectedAgent === 'all') {
+      return { calls: billing.totalCalls || 0, minutes: billing.totalMinutes || 0, cost: billing.totalCost || 0 };
+    }
+    const found = (billing.byAgent || []).find((a) => a.name === selectedAgentName);
+    return found ? { calls: found.calls, minutes: found.minutes, cost: found.cost } : { calls: 0, minutes: 0, cost: 0 };
+  }, [billing, selectedAgent, selectedAgentName]);
 
   return (
     <div>
@@ -83,9 +80,9 @@ export default function SettingsPage() {
       ) : (
         <>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard icon={Phone} label="Total Calls" value={filteredCalls.length} />
-            <StatCard icon={Clock} label="Total Minutes" value={totalMinutes.toFixed(1)} />
-            <StatCard icon={DollarSign} label="Estimated Cost" value={`₹${estimatedCost.toFixed(2)}`} />
+            <StatCard icon={Phone} label="Total Calls" value={selectedStats.calls} />
+            <StatCard icon={Clock} label="Total Minutes" value={selectedStats.minutes.toFixed(1)} />
+            <StatCard icon={DollarSign} label="Estimated Cost" value={`₹${selectedStats.cost.toFixed(2)}`} />
           </div>
 
           <div className="mt-6 rounded-xl border border-border bg-panel p-6">
@@ -111,10 +108,10 @@ export default function SettingsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {perAgentBreakdown.map((a) => (
-                  <tr key={a.id} className={a.id === selectedAgent ? 'bg-accent/5' : ''}>
+                {(billing?.byAgent || []).map((a) => (
+                  <tr key={a.name} className={a.name === selectedAgentName ? 'bg-accent/5' : ''}>
                     <td className="px-5 py-4 font-medium text-white">{a.name}</td>
-                    <td className="px-5 py-4 text-muted">{a.totalCalls}</td>
+                    <td className="px-5 py-4 text-muted">{a.calls}</td>
                     <td className="px-5 py-4 text-muted">{a.minutes.toFixed(1)}</td>
                     <td className="px-5 py-4 text-muted">₹{a.cost.toFixed(2)}</td>
                   </tr>
