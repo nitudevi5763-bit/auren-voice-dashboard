@@ -105,14 +105,14 @@ export default function AnalyticsPage() {
             <StatCard icon={TrendingUp} label="Avg Call Duration" value={`${Math.round(avgSeconds)}s`} />
           </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-panel p-6">
+          <div className="mt-6 rounded-xl border border-accent/30 bg-panel p-6">
             <p className="text-sm font-medium text-white">Calls — last 14 days</p>
             <div className="mt-6 flex items-end gap-2" style={{ height: 140 }}>
               {last14Days.map((d) => (
-                <div key={d.key} className="flex flex-1 flex-col items-center gap-2">
+                <div key={d.key} className="flex h-full flex-1 flex-col items-end justify-end gap-2">
                   <div
-                    className="w-full rounded-t-md bg-accent/70"
-                    style={{ height: `${Math.max(4, (d.count / maxDayCount) * 100)}%` }}
+                    className="w-full rounded-t-md bg-accent"
+                    style={{ height: `${Math.max(4, (d.count / maxDayCount) * 110)}px` }}
                     title={`${d.count} calls`}
                   />
                   <span className="text-[10px] text-muted">{d.label}</span>
