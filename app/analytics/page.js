@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
               {last14Days.map((d) => (
                 <div key={d.key} className="flex h-full flex-1 flex-col items-end justify-end gap-2">
                   <div
-                    className="w-full rounded-t-md bg-accent"
+                    className="gradient-btn w-full rounded-t-md"
                     style={{ height: `${Math.max(4, (d.count / maxDayCount) * 110)}px` }}
                     title={`${d.count} calls`}
                   />
