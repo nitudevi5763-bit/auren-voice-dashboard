@@ -97,9 +97,9 @@ export default function SettingsPage() {
             </label>
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded-xl border border-border">
+          <div className="mt-6 overflow-hidden rounded-xl border border-accent/30">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-panel text-xs uppercase tracking-wide text-muted">
+              <thead className="border-b border-accent/30 bg-accent/10 text-xs uppercase tracking-wide text-accent">
                 <tr>
                   <th className="px-5 py-3 font-medium">Agent</th>
                   <th className="px-5 py-3 font-medium">Total Calls</th>
@@ -107,9 +107,14 @@ export default function SettingsPage() {
                   <th className="px-5 py-3 font-medium">Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-accent/10">
                 {(billing?.byAgent || []).map((a) => (
-                  <tr key={a.name} className={a.name === selectedAgentName ? 'bg-accent/5' : ''}>
+                  <tr
+                    key={a.name}
+                    className={`transition-colors hover:bg-accent/10 ${
+                      a.name === selectedAgentName ? 'bg-accent/15' : ''
+                    }`}
+                  >
                     <td className="px-5 py-4 font-medium text-white">{a.name}</td>
                     <td className="px-5 py-4 text-muted">{a.calls}</td>
                     <td className="px-5 py-4 text-muted">{a.minutes.toFixed(1)}</td>
